@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文献管理フォルダ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f5f0;
+  --surface: #ffffff;
+  --surface2: #f0ede6;
+  --border: #e2ddd5;
+  --border2: #ccc7bc;
+  --text: #1a1916;
+  --text2: #6b6660;
+  --text3: #9e9993;
+  --accent: #2d5a3d;
+  --accent-light: #e8f0ea;
+  --accent-mid: #4a8a5d;
+  --danger: #8b2e2e;
+  --danger-light: #f5eaea;
+  --warn: #7a5c1e;
+  --warn-light: #f5f0e8;
+  --info: #1e4a7a;
+  --info-light: #e8f0f8;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* layout */
+.app { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 2.5rem; padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.topbar-left h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 26px; font-weight: 400; letter-spacing: -0.3px;
+  color: var(--text);
+}
+.topbar-left p { font-size: 13px; color: var(--text3); margin-top: 2px; }
+
+/* buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+  font-weight: 500; border-radius: var(--radius);
+  border: 1px solid var(--border2); background: var(--surface);
+  color: var(--text2); cursor: pointer; transition: all .15s;
+  white-space: nowrap; text-decoration: none;
+}
+.btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-mid); border-color: var(--accent-mid); color: #fff; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-icon { padding: 7px 10px; }
+.btn-danger { color: var(--danger); border-color: #ddd; }
+.btn-danger:hover { background: var(--danger-light); border-color: var(--danger); }
+
+/* folder grid */
+.folder-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px; margin-bottom: 2rem;
+}
+.folder-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1.25rem;
+  cursor: pointer; transition: all .15s;
+}
+.folder-card:hover { box-shadow: var(--shadow); border-color: var(--border2); transform: translateY(-1px); }
+.folder-card.active { border-color: var(--accent); background: var(--accent-light); }
+.folder-icon { font-size: 28px; margin-bottom: 8px; }
+.folder-name { font-size: 14px; font-weight: 500; line-height: 1.35; color: var(--text); }
+.folder-meta { font-size: 12px; color: var(--text3); margin-top: 4px; }
+.folder-card.active .folder-name { color: var(--accent); }
+.folder-card.active .folder-meta { color: var(--accent-mid); }
+
+.add-card {
+  border-style: dashed; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px;
+  color: var(--text3); min-height: 110px;
+}
+.add-card:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
+.add-card-icon { font-size: 24px; }
+
+/* stats */
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 1.25rem; }
+.stat {
+  background: var(--surface2); border-radius: var(--radius); padding: .75rem 1rem;
+  border: 1px solid var(--border);
+}
+.stat-label { font-size: 11px; color: var(--text3); letter-spacing: .3px; text-transform: uppercase; }
+.stat-value { font-size: 24px; font-weight: 500; color: var(--text); margin-top: 2px; font-family: 'DM Mono', monospace; }
+
+/* controls */
+.ctrl { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+.ctrl input[type=text], .ctrl select {
+  font-family: 'DM Sans', sans-serif; font-size: 13px;
+  padding: 7px 12px; border: 1px solid var(--border2);
+  border-radius: var(--radius); background: var(--surface);
+  color: var(--text); outline: none; transition: border .15s;
+}
+.ctrl input[type=text] { flex: 1; min-width: 160px; }
+.ctrl select { width: 160px; }
+.ctrl input[type=text]:focus, .ctrl select:focus { border-color: var(--accent); }
+
+/* tabs */
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem; gap: 0;
+}
+.tab {
+  padding: 7px 18px; font-size: 13px; font-weight: 500;
+  background: none; border: none; cursor: pointer; color: var(--text3);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  font-family: 'DM Sans', sans-serif; transition: all .15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* paper area header */
+.paper-hd {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.paper-hd h2 {
+  font-family: 'DM Serif Display', serif; font-size: 20px;
+  font-weight: 400; flex: 1; color: var(--text);
+}
+
+/* cards */
+.cards { display: flex; flex-direction: column; gap: 10px; }
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1rem 1.25rem;
+  transition: border-color .15s;
+}
+.card:hover { border-color: var(--border2); }
+.card-title { font-size: 14px; font-weight: 500; line-height: 1.45; color: var(--text); }
+.badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
+.badge {
+  font-size: 11px; padding: 2px 9px; border-radius: 99px;
+  font-weight: 500; letter-spacing: .2px;
+}
+.bc { background: var(--info-light); color: var(--info); }
+.bm { background: var(--accent-light); color: var(--accent); }
+.br { background: var(--warn-light); color: var(--warn); }
+.bi { background: var(--danger-light); color: var(--danger); }
+.bx { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+.bnew { background: #fff3e0; color: #b45309; }
+.card-meta { font-size: 12px; color: var(--text2); margin-top: 6px; line-height: 1.6; }
+.card-meta em { font-style: italic; color: var(--text3); }
+.card-acts { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+.card-acts a { font-size: 12px; color: var(--accent); text-decoration: none; font-weight: 500; }
+.card-acts a:hover { text-decoration: underline; }
+.card-acts button {
+  font-size: 12px; color: var(--text3); background: none;
+  border: none; cursor: pointer; padding: 0; font-family: inherit;
+  transition: color .1s;
+}
+.card-acts button:hover { color: var(--text); }
+.card-acts .sep { color: var(--border2); }
+.card-acts .del-btn:hover { color: var(--danger); }
+
+/* table */
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  background: var(--surface2); font-weight: 500; text-align: left;
+  padding: 9px 12px; border-bottom: 1px solid var(--border);
+  white-space: nowrap; cursor: pointer; user-select: none;
+  color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: .4px;
+}
+th:hover { background: var(--bg); color: var(--text); }
+td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+.td-title a { color: var(--accent); text-decoration: none; font-weight: 500; }
+.td-title a:hover { text-decoration: underline; }
+.td-sum { font-size: 11px; color: var(--text3); margin-top: 2px; max-width: 200px; }
+
+/* modal */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(26,25,22,.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; backdrop-filter: blur(2px);
+}
+.modal {
+  background: var(--surface); border-radius: var(--radius-lg);
+  border: 1px solid var(--border); padding: 1.75rem;
+  width: min(520px, 92vw); max-height: 85vh; overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.modal h2 {
+  font-family: 'DM Serif Display', serif; font-size: 20px;
+  font-weight: 400; margin-bottom: 1.25rem; color: var(--text);
+}
+.form-row { margin-bottom: 1rem; }
+.form-row label { font-size: 12px; color: var(--text3); display: block; margin-bottom: 5px; font-weight: 500; text-transform: uppercase; letter-spacing: .3px; }
+.form-row input[type=text],
+.form-row textarea,
+.form-row select {
+  width: 100%; font-family: 'DM Sans', sans-serif; font-size: 13px;
+  padding: 8px 12px; border: 1px solid var(--border2);
+  border-radius: var(--radius); background: var(--surface);
+  color: var(--text); outline: none; transition: border .15s;
+}
+.form-row input[type=text]:focus,
+.form-row textarea:focus { border-color: var(--accent); }
+.form-row textarea { height: 80px; resize: vertical; }
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-acts { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+/* info bar */
+.info-bar {
+  background: var(--accent-light); border: 1px solid #b8d4c0;
+  border-radius: var(--radius); padding: .6rem 1rem;
+  font-size: 13px; color: var(--accent); margin-bottom: 1rem;
+  display: none; font-weight: 500;
+}
+
+/* footer */
+.foot {
+  font-size: 11px; color: var(--text3); margin-top: 1.5rem;
+  padding-top: 1rem; border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;
+}
+
+/* paper area hidden */
+#paper-area { display: none; }
+#paper-area.visible { display: block; }
+
+.no-res { text-align: center; color: var(--text3); padding: 3rem 1rem; font-size: 13px; }
+
+/* pubmed instruction panel */
+.pubmed-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.pubmed-panel h3 { font-size: 14px; font-weight: 500; margin-bottom: .5rem; color: var(--text); }
+.pubmed-panel p { font-size: 13px; color: var(--text2); margin-bottom: .75rem; line-height: 1.6; }
+.copy-prompt {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: .75rem 1rem;
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  color: var(--text); line-height: 1.7; word-break: break-word;
+  margin-bottom: .75rem; max-height: 120px; overflow-y: auto;
+}
+
+/* add paper form */
+.add-paper-section {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1.25rem; margin-top: 1rem;
+  display: none;
+}
+.add-paper-section.open { display: block; }
+.add-paper-section h3 { font-size: 14px; font-weight: 500; margin-bottom: 1rem; color: var(--text); }
+
+@media (max-width: 600px) {
+  .stats { grid-template-columns: repeat(2,1fr); }
+  .folder-grid { grid-template-columns: repeat(2,1fr); }
+  .paper-hd { flex-direction: column; align-items: flex-start; }
+  .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>📁 文献管理フォルダ</h1>
+      <p>疾患・病態ごとに論文を整理・蓄積するツール</p>
+    </div>
+    <button class="btn btn-primary" onclick="showAddFolder()">＋ 新規フォルダ</button>
+  </div>
+
+  <div class="info-bar" id="info-bar"></div>
+
+  <!-- folder list -->
+  <div id="folder-section">
+    <div class="folder-grid" id="folder-grid"></div>
+  </div>
+
+  <!-- paper area -->
+  <div id="paper-area">
+    <div class="paper-hd">
+      <button class="btn btn-sm" onclick="backToFolders()">← 一覧へ</button>
+      <h2 id="paper-area-title"></h2>
+      <button class="btn btn-sm btn-primary" onclick="showPubmedPanel()">🔍 PubMed検索</button>
+      <button class="btn btn-sm" onclick="showAddPaperForm()">＋ 論文を手動追加</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteFolder()" style="margin-left:auto">🗑</button>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <!-- pubmed instruction panel -->
+    <div class="pubmed-panel" id="pubmed-panel" style="display:none">
+      <h3>🔍 Claude.aiでPubMedを検索してこのフォルダに追加する方法</h3>
+      <p>以下のプロンプトをClaude.aiにコピーして貼り付けてください。検索結果から論文データをJSON形式でもらい、下の手動追加フォームで登録できます。</p>
+      <div class="copy-prompt" id="pubmed-prompt-text"></div>
+      <button class="btn btn-sm btn-primary" onclick="copyPubmedPrompt()">📋 プロンプトをコピー</button>
+      <button class="btn btn-sm" onclick="closePubmedPanel()" style="margin-left:6px">閉じる</button>
+    </div>
+
+    <!-- add paper form -->
+    <div class="add-paper-section" id="add-paper-section">
+      <h3>＋ 論文を追加</h3>
+      <div class="form-row"><label>タイトル *</label><input type="text" id="p-title" placeholder="論文タイトル（英語）"></div>
+      <div class="form-row-2" style="margin-bottom:1rem">
+        <div class="form-row" style="margin:0"><label>著者</label><input type="text" id="p-authors" placeholder="Yamada T et al."></div>
+        <div class="form-row" style="margin:0"><label>雑誌</label><input type="text" id="p-journal" placeholder="N Engl J Med"></div>
+      </div>
+      <div class="form-row-2" style="margin-bottom:1rem">
+        <div class="form-row" style="margin:0"><label>年</label><input type="text" id="p-year" placeholder="2025"></div>
+        <div class="form-row" style="margin:0"><label>研究デザイン</label>
+          <select id="p-type">
+            <option value="cohort">コホート研究</option>
+            <option value="rct">RCT</option>
+            <option value="intervention">介入研究</option>
+            <option value="meta">メタ解析・レビュー</option>
+            <option value="case-series">ケースシリーズ</option>
+            <option value="cross-sectional">横断研究</option>
+            <option value="other">その他</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-2" style="margin-bottom:1rem">
+        <div class="form-row" style="margin:0"><label>n数</label><input type="text" id="p-n" placeholder="例: 245"></div>
+        <div class="form-row" style="margin:0"><label>PMID</label><input type="text" id="p-pmid" placeholder="例: 38627338"></div>
+      </div>
+      <div class="form-row"><label>DOI</label><input type="text" id="p-doi" placeholder="例: 10.1007/s11325-024-03028-x"></div>
+      <div class="form-row"><label>要約（日本語）</label><textarea id="p-summary" placeholder="論文の主要なポイントを日本語で記入"></textarea></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-primary" onclick="addPaperManual()">追加する</button>
+        <button class="btn" onclick="closeAddPaperForm()">キャンセル</button>
+      </div>
+    </div>
+
+    <div class="ctrl" style="margin-top:1rem">
+      <input type="text" id="q" placeholder="タイトル・著者・キーワードで絞り込み..." oninput="renderPapers()">
+      <select id="ft" onchange="renderPapers()">
+        <option value="">すべての研究デザイン</option>
+        <option value="cohort">コホート研究</option>
+        <option value="rct">RCT</option>
+        <option value="intervention">介入研究</option>
+        <option value="meta">メタ解析・レビュー</option>
+        <option value="case-series">ケースシリーズ</option>
+        <option value="cross-sectional">横断研究</option>
+      </select>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-card" onclick="switchTab('card')">🗂 カード</button>
+      <button class="tab" id="tab-table" onclick="switchTab('table')">📊 テーブル</button>
+    </div>
+
+    <div id="view-card"></div>
+    <div id="view-table" style="display:none"></div>
+
+    <div class="foot" id="foot"></div>
+  </div>
+</div>
+
+<!-- folder modal -->
+<div class="modal-bg" id="modal-folder" style="display:none" onclick="if(event.target===this)closeModal('modal-folder')">
+  <div class="modal">
+    <h2>新規フォルダを作成</h2>
+    <div class="form-row"><label>疾患名・フォルダ名 *</label><input type="text" id="f-name" placeholder="例: 好酸球性多発血管炎性肉芽腫症（EGPA）"></div>
+    <div class="form-row"><label>PubMed検索キーワード（英語）</label><input type="text" id="f-keywords" placeholder="例: Eosinophilic Granulomatosis with Polyangiitis EGPA"></div>
+    <div class="form-row"><label>収録条件</label><textarea id="f-criteria" placeholder="例: 2020年以降のRCT・介入研究・コホート研究・10例以上のケースシリーズ"></textarea></div>
+    <div class="form-row"><label>検索期間</label>
+      <div class="form-row-2">
+        <input type="text" id="f-year-from" placeholder="開始年（例: 2020）">
+        <input type="text" id="f-year-to" placeholder="終了年（例: 2025）">
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn" onclick="closeModal('modal-folder')">キャンセル</button>
+      <button class="btn btn-primary" onclick="createFolder()">作成する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TL = { cohort:"コホート研究", meta:"メタ解析・レビュー", rct:"RCT", intervention:"介入研究", "case-series":"ケースシリーズ", "cross-sectional":"横断研究", other:"その他" };
+const TC = { cohort:"bc", meta:"bm", rct:"br", intervention:"bi", "case-series":"bx", "cross-sectional":"bx", other:"bx" };
+
+const EGPA_PAPERS = [
+  {id:"42095000",title:"Real-world outcomes and corticosteroid sparing with mepolizumab for EGPA or HES",authors:"Wechsler ME et al.",journal:"J Allergy Clin Immunol Glob",year:2026,month:"2026-03",type:"cohort",n:60,summary:"後ろ向きコホート（EGPA n=44, HES n=16）。メポリズマブによるOCS減量・臓器障害改善を最大2年追跡。",doi:"10.1016/j.jacig.2026.100695",pmid:"42095000",isNew:false},
+  {id:"41777743",title:"Burden of EGPA by disease phase and steroid-sparing effects of biologics: real-world retrospective study in Europe",authors:"Hwee J et al.",journal:"ERJ Open Res",year:2026,month:"2026-03",type:"cohort",n:407,summary:"欧州5カ国後ろ向きコホート（n=407）。生物製剤でOCS減量・寛解率改善を確認。",doi:"10.1183/23120541.00310-2025",pmid:"41777743",isNew:false},
+  {id:"42004946",title:"Long-term outcomes remain unchanged despite reduced glucocorticoid exposure in AAV: REVEAL cohort",authors:"Shiomi M et al.",journal:"Front Immunol",year:2026,month:"2026-04",type:"cohort",n:460,summary:"日本多施設コホート（REVEAL study）。GC暴露量減少も5年生存率に有意差なし。EGPA n=111含む。",doi:"10.3389/fimmu.2026.1807423",pmid:"42004946",isNew:false},
+  {id:"42096644",title:"Nationwide Analysis of Eosinophilic Granulomatosis With Polyangiitis Hospitalizations",authors:"Natu A et al.",journal:"J Clin Rheumatol",year:2026,month:"2026-05",type:"cohort",n:12900,summary:"米国NIS大規模解析。院内死亡率2.75%。腎疾患（OR 5.20）・感染症（OR 3.87）が死亡の独立予測因子。",doi:"10.1097/RHU.0000000000002358",pmid:"42096644",isNew:false},
+  {id:"42154636",title:"Role of bronchoscopy for respiratory involvement in eosinophilic granulomatosis with polyangiitis",authors:"Li J et al.",journal:"Clin Exp Rheumatol",year:2026,month:"2026-05",type:"cohort",n:109,summary:"中国後ろ向き研究（n=109）。粘膜浮腫87.2%、TBBで81.7%に病理的サポート。",doi:"10.55563/clinexprheumatol/uoqdnb",pmid:"42154636",isNew:false},
+  {id:"41989423",title:"Latent Class Analysis to Explore Subtypes of EGPA",authors:"Gu Y et al.",journal:"Arch Rheumatol",year:2026,month:"2026-04",type:"cohort",n:245,summary:"中国後ろ向きコホート（n=245）。潜在クラス分析で全身型・呼吸器限局型に分類。後者は予後良好。",doi:"10.5152/ArchRheumatol.2025.25095",pmid:"41989423",isNew:false},
+  {id:"42157367",title:"Efficacy and safety of biologics for EGPA: a network meta-analysis",authors:"Zhang Y et al.",journal:"Postgrad Med",year:2026,month:"2026-05",type:"meta",n:1150,summary:"RCT含む17研究のネットワークメタ解析。ベンラリズマブ（OR 6.18）・メポリズマブ（OR 5.83）が最高寛解率。",doi:"10.1080/00325481.2026.2675084",pmid:"42157367",isNew:false},
+  {id:"42167620",title:"Mepolizumab for EGPA: A scoping review of effectiveness and safety from real-world evidence",authors:"Rúa-Figueroa Í et al.",journal:"Autoimmun Rev",year:2026,month:"2026-05",type:"meta",n:2312,summary:"51研究（累積n=2,312）のスコーピングレビュー。GC投与量最大87%減少、約50%がGC完全中止。",doi:"10.1016/j.autrev.2026.104080",pmid:"42167620",isNew:false},
+  {id:"41809856",title:"Benralizumab reduces sputum ANCA in patients with eosinophilic granulomatosis with polyangiitis",authors:"Mukherjee M et al.",journal:"ERJ Open Res",year:2026,month:"2026-03",type:"intervention",n:null,summary:"ベンラリズマブ投与EGPA患者において喀痰中ANCAが有意に減少。",doi:"10.1183/23120541.01134-2025",pmid:"41809856",isNew:false},
+  {id:"41801966",title:"Leukotriene receptor antagonists and EGPA: disproportionality analysis",authors:"Liang C et al.",journal:"PLoS One",year:2026,month:"2026-03",type:"cohort",n:null,summary:"3カ国有害事象DBを用いた不均衡分析。LTRAとEGPAの有意な関連。発症中央値233日。",doi:"10.1371/journal.pone.0343084",pmid:"41801966",isNew:false}
+];
+
+const ASTHMA_OSA_PAPERS = [
+  {id:"38627338",title:"The CORE syndrome: an overlap of severe asthma, obstructive sleep apnea, rhinosinusitis, and esophageal reflux",authors:"Tondo P et al.",journal:"Sleep & Breathing",year:2024,month:"2024-04",type:"intervention",n:6,summary:"重症喘息+OSA合併患者へのCPAP介入研究（n=6）。12ヶ月後にACTスコア改善、経口ステロイド離脱、喘息の臨床的寛解を達成。",doi:"10.1007/s11325-024-03028-x",pmid:"38627338",isNew:false},
+  {id:"38223952",title:"Obstructive sleep apnea: a risk for uncontrolled and more severe asthma in adults",authors:"Martins Dos Santos G et al.",journal:"Eur Ann Allergy Clin Immunol",year:2024,month:"2024-01",type:"cross-sectional",n:216,summary:"成人喘息患者216名の横断研究。OSA高リスク群は喘息コントロール不良（OR 2.81）・重症化と有意に関連。",doi:"10.23822/EurAnnACI.1764-1489.324",pmid:"38223952",isNew:false},
+  {id:"39715601",title:"Comprehensive Genetic Analysis Exploring Sedentary Lifestyle, Physical Activity, and Respiratory Diseases",authors:"Wan W et al.",journal:"Int Arch Allergy Immunol",year:2024,month:"2024-12",type:"cohort",n:500000,summary:"50万人超のMR解析。余暇スクリーンタイムが喘息（OR 1.22）およびOSA（OR 1.12）リスクと正相関。身体活動は喘息リスクを有意に低下（OR 0.68）。",doi:"10.1159/000543150",pmid:"39715601",isNew:false}
+];
+
+let folders = [];
+let currentFolderId = null;
+let currentTab = "card";
+let sortCol = "month", sortDir = "desc";
+
+function init() {
+  try {
+    const s = localStorage.getItem("literature_manager_folders");
+    if (s) {
+      folders = JSON.parse(s);
+    } else {
+      folders = [
+        { id:"egpa-2026", name:"EGPA（好酸球性多発血管炎性肉芽腫症）", keywords:"Eosinophilic Granulomatosis with Polyangiitis EGPA", criteria:"2026年発表のRCT・介入研究・コホート研究・10例以上のケースシリーズ", yearFrom:"2026", yearTo:"2026", papers: EGPA_PAPERS, lastUpdated: new Date().toISOString() },
+        { id:"asthma-osa", name:"喘息 and 睡眠時無呼吸症", keywords:"asthma obstructive sleep apnea OSA", criteria:"2020年以降のRCT・介入研究・コホート研究", yearFrom:"2020", yearTo:"2025", papers: ASTHMA_OSA_PAPERS, lastUpdated: new Date().toISOString() }
+      ];
+      save();
+    }
+  } catch(e) { folders = []; }
+  renderFolders();
+}
+
+function save() {
+  try { localStorage.setItem("literature_manager_folders", JSON.stringify(folders)); } catch(e) {}
+}
+
+function renderFolders() {
+  document.getElementById("paper-area").style.display = "none";
+  document.getElementById("folder-section").style.display = "";
+  const el = document.getElementById("folder-grid");
+  el.innerHTML = folders.map(f => `
+    <div class="folder-card${currentFolderId===f.id?" active":""}" onclick="openFolder('${f.id}')">
+      <div class="folder-icon">📁</div>
+      <div class="folder-name">${f.name}</div>
+      <div class="folder-meta">${(f.papers||[]).length}件 ｜ ${f.yearFrom||""}${f.yearTo&&f.yearTo!==f.yearFrom?"–"+f.yearTo:""}</div>
+    </div>
+  `).join("") + `
+    <div class="folder-card add-card" onclick="showAddFolder()">
+      <div class="add-card-icon">＋</div>
+      <span style="font-size:13px;font-weight:500">新規フォルダ</span>
+    </div>`;
+}
+
+function openFolder(id) {
+  currentFolderId = id;
+  const f = folders.find(x => x.id === id);
+  if (!f) return;
+  document.getElementById("folder-section").style.display = "none";
+  document.getElementById("paper-area").style.display = "block";
+  document.getElementById("paper-area-title").textContent = f.name;
+  document.getElementById("pubmed-panel").style.display = "none";
+  document.getElementById("add-paper-section").classList.remove("open");
+  document.getElementById("q").value = "";
+  document.getElementById("ft").value = "";
+  currentTab = "card";
+  document.getElementById("tab-card").className = "tab active";
+  document.getElementById("tab-table").className = "tab";
+  document.getElementById("view-card").style.display = "";
+  document.getElementById("view-table").style.display = "none";
+  renderStats(); renderPapers(); renderFoot();
+}
+
+function backToFolders() { currentFolderId = null; renderFolders(); }
+function cf() { return folders.find(x => x.id === currentFolderId); }
+
+function renderStats() {
+  const f = cf(); if (!f) return;
+  const p = f.papers || [];
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="stat-label">総論文数</div><div class="stat-value">${p.length}</div></div>
+    <div class="stat"><div class="stat-label">コホート研究</div><div class="stat-value">${p.filter(x=>x.type==="cohort").length}</div></div>
+    <div class="stat"><div class="stat-label">メタ解析</div><div class="stat-value">${p.filter(x=>x.type==="meta").length}</div></div>
+    <div class="stat"><div class="stat-label">新規追加</div><div class="stat-value">${p.filter(x=>x.isNew).length}</div></div>`;
+}
+
+function filtered() {
+  const f = cf(); if (!f) return [];
+  const q = document.getElementById("q").value.toLowerCase();
+  const ft = document.getElementById("ft").value;
+  return (f.papers||[]).filter(p => {
+    const m = !q || (p.title+p.authors+(p.summary||"")+(p.journal||"")).toLowerCase().includes(q);
+    return m && (!ft || p.type === ft);
+  });
+}
+
+function renderPapers() {
+  if (currentTab === "card") renderCards(); else renderTable();
+}
+
+function switchTab(t) {
+  currentTab = t;
+  document.getElementById("tab-card").className = "tab" + (t==="card"?" active":"");
+  document.getElementById("tab-table").className = "tab" + (t==="table"?" active":"");
+  document.getElementById("view-card").style.display = t==="card" ? "" : "none";
+  document.getElementById("view-table").style.display = t==="table" ? "" : "none";
+  renderPapers();
+}
+
+function renderCards() {
+  const list = filtered();
+  const el = document.getElementById("view-card");
+  if (!list.length) { el.innerHTML = '<div class="no-res">該当する論文がありません</div>'; return; }
+  el.innerHTML = '<div class="cards">' + list.map(p => `
+    <div class="card">
+      <div class="card-title">${p.title}</div>
+      <div class="badges">
+        <span class="badge ${TC[p.type]||'bx'}">${TL[p.type]||p.type}</span>
+        ${p.n!=null?`<span class="badge bx">n=${Number(p.n).toLocaleString()}</span>`:""}
+        ${p.isNew?'<span class="badge bnew">新規</span>':""}
+      </div>
+      <div class="card-meta">${p.authors||""} — <em>${p.journal||""}</em> (${p.year||""})<br>${p.summary||""}</div>
+      <div class="card-acts">
+        ${p.doi?`<a href="https://doi.org/${p.doi}" target="_blank">🔗 DOI</a><span class="sep">·</span>`:""}
+        ${p.pmid?`<a href="https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/" target="_blank">PubMed</a><span class="sep">·</span>`:""}
+        <button onclick="markRead('${p.id}')">既読にする</button>
+        <span class="sep">·</span>
+        <button class="del-btn" onclick="removePaper('${p.id}')">削除</button>
+      </div>
+    </div>`).join("") + "</div>";
+}
+
+function renderTable() {
+  const list = filtered();
+  const el = document.getElementById("view-table");
+  if (!list.length) { el.innerHTML = '<div class="no-res">該当する論文がありません</div>'; return; }
+  const sorted = [...list].sort((a,b) => {
+    let av = a[sortCol], bv = b[sortCol];
+    if (av==null) av = sortDir==="asc"?"zzz":-1;
+    if (bv==null) bv = sortDir==="asc"?"zzz":-1;
+    if (typeof av==="number") return sortDir==="asc"?av-bv:bv-av;
+    return sortDir==="asc"?String(av).localeCompare(String(bv)):String(bv).localeCompare(String(av));
+  });
+  const arrow = k => k===sortCol?(sortDir==="asc"?" ↑":" ↓"):"";
+  el.innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr>
+      <th onclick="sortBy('month')">年月${arrow('month')}</th>
+      <th onclick="sortBy('authors')">著者${arrow('authors')}</th>
+      <th onclick="sortBy('journal')">雑誌${arrow('journal')}</th>
+      <th onclick="sortBy('type')">研究デザイン${arrow('type')}</th>
+      <th onclick="sortBy('n')">n数${arrow('n')}</th>
+      <th>タイトル・要約</th>
+      <th>リンク</th>
+    </tr></thead>
+    <tbody>${sorted.map(p=>`<tr>
+      <td style="white-space:nowrap">${p.month||p.year||""}</td>
+      <td style="white-space:nowrap;max-width:120px">${p.authors||""}</td>
+      <td style="white-space:nowrap;max-width:110px">${p.journal||""}</td>
+      <td><span class="badge ${TC[p.type]||'bx'}">${TL[p.type]||p.type}</span>${p.isNew?' <span class="badge bnew">新規</span>':''}</td>
+      <td style="text-align:right;white-space:nowrap">${p.n!=null?Number(p.n).toLocaleString():"—"}</td>
+      <td style="max-width:240px">
+        <div class="td-title">${p.doi?`<a href="https://doi.org/${p.doi}" target="_blank">${p.title||""}</a>`:(p.title||"")}</div>
+        <div class="td-sum">${p.summary||""}</div>
+      </td>
+      <td style="white-space:nowrap">${p.pmid?`<a href="https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/" target="_blank" style="color:var(--accent)">PubMed</a>`:""}</td>
+    </tr>`).join("")}</tbody>
+  </table></div>`;
+}
+
+function sortBy(col) {
+  if (sortCol===col) sortDir = sortDir==="asc"?"desc":"asc";
+  else { sortCol=col; sortDir=col==="n"?"desc":"asc"; }
+  renderTable();
+}
+
+function renderFoot() {
+  const f = cf(); if (!f) return;
+  const d = f.lastUpdated ? new Date(f.lastUpdated).toLocaleDateString("ja-JP") : "未確認";
+  document.getElementById("foot").innerHTML = `
+    <span>最終更新: ${d}</span>
+    <span>収録条件: ${f.criteria||"未設定"}</span>
+    <span>localStorageに保存</span>`;
+}
+
+function showInfo(msg) {
+  const b = document.getElementById("info-bar");
+  b.textContent = msg; b.style.display = "block";
+  setTimeout(()=>b.style.display="none", 4000);
+}
+
+function markRead(id) {
+  const f = cf(); if (!f) return;
+  f.papers = (f.papers||[]).map(p => p.id===id?{...p,isNew:false}:p);
+  save(); renderStats(); renderPapers();
+}
+
+function removePaper(id) {
+  const f = cf(); if (!f) return;
+  if (!confirm("この論文を削除しますか？")) return;
+  f.papers = (f.papers||[]).filter(p => p.id!==id);
+  save(); renderStats(); renderPapers(); showInfo("論文を削除しました");
+}
+
+function deleteFolder() {
+  const f = cf(); if (!f) return;
+  if (!confirm(`「${f.name}」フォルダを削除しますか？この操作は取り消せません。`)) return;
+  folders = folders.filter(x => x.id!==f.id);
+  save(); backToFolders();
+}
+
+function showPubmedPanel() {
+  const f = cf(); if (!f) return;
+  const pmids = (f.papers||[]).map(p=>p.pmid).filter(Boolean).join(", ");
+  const prompt = `「${f.name}」に関する論文をPubMedで検索してください。\n検索キーワード: ${f.keywords||f.name}\n収録条件: ${f.criteria||"RCT・介入研究・コホート研究・10例以上のケースシリーズ"}\n期間: ${f.yearFrom||""}〜${f.yearTo||""}年\n\n該当する論文をリストアップし、各論文について以下の情報をJSON形式で提供してください:\ntitle, authors, journal, year, month(YYYY-MM形式), type(cohort/rct/intervention/meta/case-series/cross-sectional), n(症例数、不明の場合null), pmid, doi, summary(日本語要約)\n\n登録済みPMID（重複除外用）: ${pmids||"なし"}`;
+  document.getElementById("pubmed-prompt-text").textContent = prompt;
+  document.getElementById("pubmed-panel").style.display = "block";
+  document.getElementById("pubmed-panel").scrollIntoView({behavior:"smooth"});
+}
+
+function closePubmedPanel() { document.getElementById("pubmed-panel").style.display = "none"; }
+
+function copyPubmedPrompt() {
+  const t = document.getElementById("pubmed-prompt-text").textContent;
+  navigator.clipboard.writeText(t).then(()=>showInfo("プロンプトをクリップボードにコピーしました。Claude.aiに貼り付けてください。")).catch(()=>showInfo("コピーできませんでした。手動でテキストを選択してコピーしてください。"));
+}
+
+function showAddPaperForm() {
+  document.getElementById("add-paper-section").classList.add("open");
+  document.getElementById("add-paper-section").scrollIntoView({behavior:"smooth"});
+}
+function closeAddPaperForm() { document.getElementById("add-paper-section").classList.remove("open"); }
+
+function addPaperManual() {
+  const f = cf(); if (!f) return;
+  const title = document.getElementById("p-title").value.trim();
+  if (!title) { alert("タイトルを入力してください"); return; }
+  const pmid = document.getElementById("p-pmid").value.trim();
+  if (pmid && (f.papers||[]).find(p=>p.pmid===pmid)) { showInfo("このPMIDはすでに登録済みです"); return; }
+  const paper = {
+    id: pmid || "manual-"+Date.now(),
+    title,
+    authors: document.getElementById("p-authors").value.trim(),
+    journal: document.getElementById("p-journal").value.trim(),
+    year: parseInt(document.getElementById("p-year").value)||new Date().getFullYear(),
+    month: document.getElementById("p-year").value||"",
+    type: document.getElementById("p-type").value,
+    n: document.getElementById("p-n").value ? parseInt(document.getElementById("p-n").value) : null,
+    pmid: pmid||null,
+    doi: document.getElementById("p-doi").value.trim()||null,
+    summary: document.getElementById("p-summary").value.trim(),
+    isNew: true
+  };
+  f.papers = [paper, ...(f.papers||[])];
+  f.lastUpdated = new Date().toISOString();
+  save();
+  ["p-title","p-authors","p-journal","p-year","p-n","p-pmid","p-doi","p-summary"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("p-type").value = "cohort";
+  closeAddPaperForm();
+  renderStats(); renderPapers(); renderFoot();
+  showInfo("論文を追加しました");
+}
+
+function showAddFolder() {
+  ["f-name","f-keywords","f-criteria"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("f-year-from").value = new Date().getFullYear();
+  document.getElementById("f-year-to").value = new Date().getFullYear();
+  document.getElementById("modal-folder").style.display = "flex";
+}
+
+function closeModal(id) { document.getElementById(id).style.display = "none"; }
+
+function createFolder() {
+  const name = document.getElementById("f-name").value.trim();
+  if (!name) { alert("フォルダ名を入力してください"); return; }
+  const folder = {
+    id: "folder-"+Date.now(),
+    name,
+    keywords: document.getElementById("f-keywords").value.trim(),
+    criteria: document.getElementById("f-criteria").value.trim(),
+    yearFrom: document.getElementById("f-year-from").value.trim(),
+    yearTo: document.getElementById("f-year-to").value.trim(),
+    papers: [],
+    lastUpdated: new Date().toISOString()
+  };
+  folders.push(folder);
+  save();
+  closeModal("modal-folder");
+  renderFolders();
+  showInfo(`「${name}」フォルダを作成しました`);
+}
+
+init();
+</script>
+</body>
+</html>
